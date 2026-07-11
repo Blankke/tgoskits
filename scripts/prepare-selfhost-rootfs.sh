@@ -314,10 +314,13 @@ chmod -R a+rX "$TEMP_SRC"
 
 info "Copying source tree into rootfs at $DEST_PATH..."
 
-# Bind-mount the source into the container so it's visible inside
-STABLE="/tmp/starryos-src-stable"
-rm -rf "$STABLE" 2>/dev/null || true
-cp -r "$TEMP_SRC" "$STABLE"
+# Bind-mount the source into the container so it's visible inside.
+# Use mktemp to avoid concurrent-invocation collisions on a fixed path.
+# cleanup_temp (registered above) handles $STABLE on EXIT.
+STABLE=$(mktemp -d /tmp/starryos-src-stable.XXXXXX)
+cp -a "$TEMP_SRC"/. "$STABLE"/
+[ -f "$STABLE/Cargo.toml" ] || die "Cargo.toml missing from stable source staging directory"
+[ -s "$STABLE/.source-commit" ] || die ".source-commit missing from stable source staging directory"
 
 nspawn_args=(--image="$OUTPUT_IMG" --bind="$STABLE:$STABLE" --quiet)
 if [ "$NEED_QEMU" -eq 1 ] && [ -f "/usr/bin/$QEMU_STATIC" ]; then
@@ -385,8 +388,16 @@ nspawn_run "$OUTPUT_IMG" "
     rm -f Cargo.lock && \
     cp /root/.cargo/config.toml /root/.cargo/config.toml.bak && \
     printf '[net]\noffline = false\n' > /root/.cargo/config.toml && \
-	    cargo generate-lockfile --ignore-rust-version --manifest-path Cargo.toml 2>&1 && \
-	    cargo fetch --manifest-path Cargo.toml 2>&1 && cargo fetch --manifest-path Cargo.toml --target ${TARGET} 2>&1; \
+        cargo generate-lockfile --ignore-rust-version --manifest-path Cargo.toml 2>&1 && \
+        cargo fetch --manifest-path Cargo.toml 2>&1 && cargo fetch --manifest-path Cargo.toml --target ${TARGET} 2>&1 && \
+        if [ "${ARCH}" = "x86_64" ]; then \
+            CARGO_UNSTABLE_JSON_TARGET_SPEC=true \
+                cargo fetch --locked \
+                    --target scripts/targets/std/pie/x86_64-unknown-linux-musl.json \
+                    -Z build-std=std,panic_abort \
+                    -Z json-target-spec \
+                    2>&1; \
+        fi; \
     RET=\$?; \
     mv /root/.cargo/config.toml.bak /root/.cargo/config.toml; \
     rm -f Cargo.toml.orig; \
