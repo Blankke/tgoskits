@@ -24,6 +24,7 @@ use crate::{
 struct LoadedQemuAppCaseFields {
     test_case: TestQemuCase,
     rootfs_path: Option<PathBuf>,
+    smp: Option<usize>,
     snapshot: bool,
 }
 
@@ -72,6 +73,7 @@ pub(crate) async fn prepare_qemu_app_case(
         build_config_path,
         qemu_config_path,
         rootfs_path,
+        smp: fields.as_ref().and_then(|fields| fields.smp),
         snapshot: fields.as_ref().is_none_or(|fields| fields.snapshot),
         test_commands: fields
             .as_ref()
@@ -122,6 +124,8 @@ fn load_qemu_app_case_fields(
         true,
     )?;
     let rootfs_path = qemu_app_config_rootfs_path(workspace_root, qemu_config_path)?;
+    let qemu = read_qemu_app_config(qemu_config_path)?;
+    let smp = qemu_test::smp_from_qemu_arg(&qemu);
     let snapshot = qemu_test::load_qemu_case_extra_config(qemu_config_path)?
         .snapshot
         .unwrap_or(true);
@@ -129,6 +133,7 @@ fn load_qemu_app_case_fields(
     Ok(LoadedQemuAppCaseFields {
         test_case,
         rootfs_path,
+        smp,
         snapshot,
     })
 }

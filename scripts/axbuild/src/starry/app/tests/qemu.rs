@@ -356,6 +356,7 @@ fn app_qemu_test_case_preserves_host_symbolize_success_regex() {
         build_config_path: None,
         qemu_config_path: Some(qemu_config_path.clone()),
         rootfs_path: PathBuf::from("/tmp/rootfs.img"),
+        smp: None,
         snapshot: true,
         test_commands: Vec::new(),
         host_symbolize_success_regex: vec!["symbolized".to_string()],

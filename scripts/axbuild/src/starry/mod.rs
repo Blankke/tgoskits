@@ -226,7 +226,7 @@ impl Starry {
                 config: case.build_config_path.clone(),
                 arch: Some(case.arch.clone()),
                 target: Some(case.target.clone()),
-                smp: None,
+                smp: case.smp,
                 debug: args.debug,
             },
             case.qemu_config_path.clone(),
