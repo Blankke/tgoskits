@@ -6,7 +6,7 @@ use ax_kernel_guard::{NoOp, NoPreemptIrqSave};
 use ax_timer_list::{TimerEvent, TimerList};
 
 #[cfg(feature = "smp")]
-use crate::select_run_queue;
+use crate::select_wake_run_queue;
 use crate::{AxTaskRef, current_run_queue};
 
 static TIMER_TICKET_ID: AtomicU64 = AtomicU64::new(1);
@@ -46,7 +46,7 @@ fn wake_task_from_timer(task: AxTaskRef) {
     if task.cpumask().get(ax_hal::percpu::this_cpu_id()) {
         current_run_queue::<NoOp>().unblock_task(task, true);
     } else {
-        select_run_queue::<NoOp>(&task).unblock_task(task, true);
+        select_wake_run_queue::<NoOp>(&task).unblock_task(task, true);
     }
 }
 

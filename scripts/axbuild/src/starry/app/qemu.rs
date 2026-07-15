@@ -115,6 +115,7 @@ fn load_qemu_app_case_fields(
     app: &StarryAppCase,
     qemu_config_path: &Path,
 ) -> anyhow::Result<LoadedQemuAppCaseFields> {
+    let qemu = read_qemu_app_config(qemu_config_path)?;
     let test_case = qemu_test::load_test_qemu_case_fields(
         app.name.clone(),
         app.name.clone(),
@@ -124,7 +125,6 @@ fn load_qemu_app_case_fields(
         true,
     )?;
     let rootfs_path = qemu_app_config_rootfs_path(workspace_root, qemu_config_path)?;
-    let qemu = read_qemu_app_config(qemu_config_path)?;
     let smp = qemu_test::smp_from_qemu_arg(&qemu);
     let snapshot = qemu_test::load_qemu_case_extra_config(qemu_config_path)?
         .snapshot

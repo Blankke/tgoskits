@@ -14,7 +14,9 @@ use ax_memory_addr::VirtAddr;
 
 #[cfg(feature = "lockdep")]
 pub use crate::lockdep::{HeldLock, HeldLockStack};
-pub(crate) use crate::run_queue::{current_run_queue, select_run_queue, select_wake_run_queue};
+pub(crate) use crate::run_queue::{
+    current_run_queue, select_new_task_run_queue, select_wake_run_queue,
+};
 #[cfg_attr(doc, doc(cfg(all(feature = "multitask", feature = "task-ext"))))]
 #[cfg(feature = "task-ext")]
 pub use crate::task::{AxTaskExt, TaskExt};
@@ -209,7 +211,7 @@ pub fn note_programmed_timer_deadline_nanos(deadline_nanos: u64) {
 pub fn spawn_task(task: TaskInner) -> AxTaskRef {
     let task_ref = task.into_arc();
     register_task(&task_ref);
-    select_run_queue::<NoPreemptIrqSave>(&task_ref).add_task(task_ref.clone());
+    select_new_task_run_queue::<NoPreemptIrqSave>(&task_ref).add_task(task_ref.clone());
     task_ref
 }
 
@@ -533,8 +535,8 @@ pub fn wake_task(task: &AxTaskRef) {
 
     // For tasks blocked on a raw WaitQueue, interrupt_waker.wake() is a
     // no-op (no waker registered). Force-unblock by transitioning the task
-    // from Blocked to Ready and placing it on the run queue of its
-    // affinity CPU.
+    // from Blocked to Ready and placing it according to the normal wakeup
+    // affinity policy.
     //
     // SAFETY: unblock_task uses a CAS on the task state (Blocked → Ready),
     // so if the task is concurrently being woken by its WaitQueue, the CAS
@@ -543,7 +545,7 @@ pub fn wake_task(task: &AxTaskRef) {
     // subsequent unblock_task call will again CAS-fail (task already Ready
     // or Running).
     if task.state() == TaskState::Blocked {
-        let mut rq = select_run_queue::<NoPreemptIrqSave>(task);
+        let mut rq = select_wake_run_queue::<NoPreemptIrqSave>(task);
         rq.unblock_task(task.clone(), false);
     }
 }

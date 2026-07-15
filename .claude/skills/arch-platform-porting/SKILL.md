@@ -45,6 +45,7 @@ Current Axvisor LoongArch QEMU bring-up uses the dynamic UEFI platform path. The
 - **Runtime MMIO mapping contract**: keep `phys_to_virt` / `virt_to_phys` scoped to RAM direct-map translation. Device resource mapping must enter through `ax-mm::iomap()`, which asks `ax_hal::mem::prepare_iomap()` for an arch/platform decision before falling back to page-table-backed device mappings. Architecture-specific aliases such as LoongArch uncached DMW belong behind `someboot::ArchTrait::ioremap_device()`, not in `ax-mm` or drivers.
 - **Drivers and rootfs**: check PCI command bits, MMIO/iomap, DMA address width, virtio transport, block device visibility, rootfs patching, and console/input feature flags.
 - **OS configs and test cases**: update ArceOS, StarryOS, and Axvisor configs only for validated architectures. Keep `qemu-<arch>.toml` runtime config separate from `build-*.toml`.
+- **Starry app SMP contract**: `cargo xtask starry app qemu` must derive the kernel build SMP capacity from the selected `qemu-*.toml` `-smp` argument and pass it through the Starry build request. Do not let QEMU expose more vCPUs than the kernel brings online, and do not duplicate a fixed CPU count in a selfhost wrapper.
 
 ## someboot Must-Haves
 

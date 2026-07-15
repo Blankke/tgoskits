@@ -174,7 +174,7 @@ fn qemu_case_fields_load_snapshot_disable() {
         root.path(),
         "macos-selfbuild",
         "qemu-aarch64.toml",
-        r#"args = []
+        r#"args = ["-smp", "4"]
 uefi = false
 to_bin = true
 snapshot = false
@@ -193,6 +193,7 @@ fail_regex = []
         load_qemu_app_case_fields(root.path(), &app, qemu_config.as_deref().unwrap()).unwrap();
 
     assert!(!fields.snapshot);
+    assert_eq!(fields.smp, Some(4));
 }
 
 #[test]

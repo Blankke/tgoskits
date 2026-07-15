@@ -7,6 +7,11 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ## [Unreleased]
 
+### Fixed
+
+- *(starry)* keep app QEMU kernel SMP capacity aligned with the configured
+  QEMU vCPU count.
+
 ## [0.4.20](https://github.com/rcore-os/tgoskits/compare/axbuild-v0.4.19...axbuild-v0.4.20) - 2026-07-10
 
 ### Added
