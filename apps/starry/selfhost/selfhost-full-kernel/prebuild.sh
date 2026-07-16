@@ -13,6 +13,7 @@ overlay_dir="${STARRY_OVERLAY_DIR:?STARRY_OVERLAY_DIR is required}"
 arch="${STARRY_ARCH:?STARRY_ARCH is required}"
 rootfs_size_mib="${SELFHOST_ROOTFS_SIZE_MIB:-32768}"
 output_dir="$workspace/target/starry-selfhost-x86_64"
+smp="${STARRY_SMP:-}"
 
 require_x86_64() {
     if [[ "$arch" != "x86_64" ]]; then
@@ -119,6 +120,15 @@ stage_run_state() {
 # guest.  We download the six component tarballs on the host, extract them
 # into a merged toolchain tree, and inject a single uncompressed tar so the
 # guest only needs `tar xf` (no XZ, no network, no tmpfs pressure).
+stage_smp_config() {
+    if [[ -n "$smp" ]]; then
+        printf '%s\n' "$smp" >"$overlay_dir/opt/starry-selfbuild-smp"
+        echo "[prebuild] SMP config written: $smp"
+    else
+        echo "[prebuild] SMP config not set — guest build will use default CPU count"
+    fi
+}
+
 stage_rust_toolchain() {
     local rust_date="2026-05-28"
     local rust_dl="https://static.rust-lang.org/dist/${rust_date}"
@@ -231,6 +241,7 @@ stage_guest_resolver
 stage_guest_runner
 stage_guest_reboot_guard
 stage_run_state
+stage_smp_config
 stage_rust_toolchain
 
 echo "selfhost x86_64 overlay ready in $overlay_dir"

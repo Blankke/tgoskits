@@ -14,6 +14,7 @@ pub(super) async fn prepare_qemu_app_rootfs(
     app: &StarryAppCase,
     arch: &str,
     target: &str,
+    smp: Option<usize>,
     configured_rootfs: Option<&Path>,
 ) -> anyhow::Result<PathBuf> {
     let rootfs_path = match configured_rootfs {
@@ -70,7 +71,8 @@ pub(super) async fn prepare_qemu_app_rootfs(
                 .env("STARRY_ARCH", arch)
                 .env("STARRY_ROOTFS", &rootfs_path)
                 .env("STARRY_STAGING_ROOT", &staging_root)
-                .env("STARRY_OVERLAY_DIR", &overlay_dir);
+                .env("STARRY_OVERLAY_DIR", &overlay_dir)
+                .env("STARRY_SMP", smp.map(|v| v.to_string()).unwrap_or_default());
             command
                 .exec()
                 .with_context(|| format!("failed to run {}", prebuild_path.display()))?;

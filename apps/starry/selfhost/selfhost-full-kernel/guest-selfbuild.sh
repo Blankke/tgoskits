@@ -11,6 +11,7 @@ SOURCE_META="${SELFHOST_SOURCE_META:-/opt/tgoskits-src.meta}"
 SOURCE_DIR="${SELFHOST_SOURCE_DIR:-/tmp/tgoskits-src}"
 TARGET_DIR="${SELFHOST_TARGET_DIR:-/opt/starry-selfhost-target}"
 ARTIFACT="${SELFHOST_ARTIFACT:-/opt/starryos-selfbuilt}"
+SMP_FILE="${SELFHOST_SMP_FILE:-/opt/starry-selfbuild-smp}"
 STATE_FILE="${SELFHOST_STATE_FILE:-/opt/starry-selfhost.state}"
 RUN_ID_FILE="${SELFHOST_RUN_ID_FILE:-/opt/starry-selfhost.run-id}"
 FAILURE_REASON="guest command failed"
@@ -249,9 +250,18 @@ build_host_xtask() {
 
 build_kernel() {
     cd "$SOURCE_DIR"
-    "$XTASK" starry build \
-        -c apps/starry/selfhost/build-x86_64-unknown-none.toml \
-        --arch x86_64
+    if [ -s "$SMP_FILE" ]; then
+        smp_val="$(head -n1 "$SMP_FILE")"
+        echo "[self-compile] SMP config: ${smp_val} CPUs"
+        "$XTASK" starry build \
+            -c apps/starry/selfhost/build-x86_64-unknown-none.toml \
+            --arch x86_64 \
+            --smp "${smp_val}"
+    else
+        "$XTASK" starry build \
+            -c apps/starry/selfhost/build-x86_64-unknown-none.toml \
+            --arch x86_64
+    fi
 }
 
 publish_artifact() {

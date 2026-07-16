@@ -60,6 +60,7 @@ pub(crate) async fn prepare_qemu_app_case(
         app,
         &arch,
         &target,
+        fields.as_ref().and_then(|fields| fields.smp),
         fields
             .as_ref()
             .and_then(|fields| fields.rootfs_path.as_deref()),
