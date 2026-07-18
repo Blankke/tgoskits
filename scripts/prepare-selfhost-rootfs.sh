@@ -309,6 +309,10 @@ trap cleanup_temp EXIT
 
 git archive HEAD | tar -x -C "$TEMP_SRC/"
 [ -f "$TEMP_SRC/Cargo.toml" ] || die "Cargo.toml missing from git archive"
+# `git archive` intentionally omits the `.git` directory, so preserve the
+# source revision explicitly for the guest-side source identity check.
+git rev-parse HEAD > "$TEMP_SRC/.source-commit" 2>/dev/null || \
+    die "failed to resolve HEAD — ensure you are in the repo root"
 [ -f "$TEMP_SRC/os/StarryOS/kernel/Cargo.toml" ] || die "Kernel Cargo.toml missing"
 chmod -R a+rX "$TEMP_SRC"
 
@@ -330,7 +334,7 @@ fi
 
 systemd-nspawn "${nspawn_args[@]}" /usr/bin/bash -c "
     mkdir -p $DEST_PATH && \
-    cp -r $STABLE/* $DEST_PATH/ && \
+    cp -a $STABLE/. $DEST_PATH/ && \
     chown -R root:root $DEST_PATH && \
     chmod -R a+rX $DEST_PATH
 "
